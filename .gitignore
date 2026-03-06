@@ -1,0 +1,48 @@
+# Build and Binary Directories
+build/
+bin/
+out/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.o
+*.obj
+*.dylib
+*.so
+*.a
+*.exe
+
+# Metal Compiled Files
+*.air
+*.metallib
+
+# IDE and System Files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+.gemini/
+.gemini_security/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+
+# Logs and Benchmarks
+*.log
+plots/
+BENCHMARK_REPORT.md
+performance_viz.png
+
+# Artifacts
+matrix_benchmarks
+simple_test
+basic_matmul_example
+libmetal_float16_accelerator.dylib
+test.o
