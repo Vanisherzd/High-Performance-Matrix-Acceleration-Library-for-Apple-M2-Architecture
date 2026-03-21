@@ -66,9 +66,10 @@ macro(add_accelerator_exe TARGET_NAME SOURCE_FILE)
 endmacro()
 
 # ── Examples ──────────────────────────────────────────────────────────────────
-add_accelerator_exe(basic_matmul_example  examples/basic_matmul.cpp)
-add_accelerator_exe(simple_test           examples/simple_test.cpp)
-add_accelerator_exe(speedup_demo          examples/speedup_demo.cpp)
+add_accelerator_exe(basic_matmul_example      examples/basic_matmul.cpp)
+add_accelerator_exe(simple_test               examples/simple_test.cpp)
+add_accelerator_exe(speedup_demo              examples/speedup_demo.cpp)
+add_accelerator_exe(alphazero_inference_sim   examples/alphazero_inference_sim.cpp)
 
 # ── Benchmarks ────────────────────────────────────────────────────────────────
 add_accelerator_exe(matrix_benchmarks  benchmarks/matrix_benchmarks.cpp)
@@ -87,6 +88,7 @@ install(
     TARGETS
         metal_float16_accelerator
         basic_matmul_example simple_test speedup_demo
+        alphazero_inference_sim
         matrix_benchmarks latency_profile
         correctness_tests
     RUNTIME DESTINATION bin

@@ -4,9 +4,20 @@ All notable changes to Metal-Float16-Accelerator are documented here.
 
 ---
 
-## [1.1.0] — 2026-03-22
+## [1.2.0] — 2026-03-22 (Application Demo)
 
-### Added
+### Added (v1.2.0)
+- `examples/alphazero_inference_sim.cpp`: AlphaZero-style neural network forward
+  pass simulation — 20 residual blocks × 2 GEMMs + policy/value heads; outputs
+  JSON timing to stdout for Python harness consumption
+- `tools/alphazero_benchmark.py`: uv-managed Python benchmark harness
+  - Runs C++ Metal GPU simulation and parses JSON results
+  - Runs equivalent NumPy FP32 (BLAS) baseline
+  - Generates 3-panel comparison chart (latency, GFLOPS, positions/sec)
+  - Prints formatted comparison table with speedup ratios
+  - No manual venv required: `uv run tools/alphazero_benchmark.py`
+
+### Added (v1.1.0)
 - `tests/correctness_tests.cpp`: numerical accuracy validation against FP32 reference
   - Shape coverage: square, non-square, prime sizes, boundary sizes (127/128/129)
   - GPU vs FP32 reference agreement (max_abs, mean_rel_err, RMSE)
