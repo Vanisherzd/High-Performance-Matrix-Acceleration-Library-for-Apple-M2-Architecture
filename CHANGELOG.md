@@ -4,7 +4,28 @@ All notable changes to Metal-Float16-Accelerator are documented here.
 
 ---
 
-## [Unreleased] — 2026-03-22
+## [1.1.0] — 2026-03-22
+
+### Added
+- `tests/correctness_tests.cpp`: numerical accuracy validation against FP32 reference
+  - Shape coverage: square, non-square, prime sizes, boundary sizes (127/128/129)
+  - GPU vs FP32 reference agreement (max_abs, mean_rel_err, RMSE)
+  - Mixed-precision accumulation benefit quantification (FP32 acc vs pure-FP16)
+  - Identity matrix sanity check
+  - CTest integration (`ctest` compatible)
+- `benchmarks/latency_profile.cpp`: statistical latency profiler
+  - P50 / P95 / P99 / P99.9 per configuration (200 samples)
+  - Jitter, CV (coefficient of variation), determinism warnings
+  - Roofline bandwidth analysis (compute-bound vs memory-bandwidth-bound)
+  - ASCII latency histogram
+  - O(N³) scaling verification
+- `.github/workflows/ci.yml`: 4-job GitHub Actions CI pipeline
+  - Release build + correctness_tests on macOS 14 (Apple Silicon runner)
+  - AddressSanitizer job (`-DSANITIZE=address`)
+  - ThreadSanitizer job (`-DSANITIZE=thread`)
+  - clang-tidy static analysis with artifact upload
+- `CMakeLists.txt`: `-DSANITIZE=<mode>` option, `enable_testing()`, `compile_commands.json`
+- CI badges (build status, ASan clean, TSan clean) in README
 
 ### Changed
 - Enhanced README: added badges, key features section, and C++ usage example

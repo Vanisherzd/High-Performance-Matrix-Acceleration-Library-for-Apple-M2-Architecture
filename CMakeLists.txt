@@ -1,31 +1,50 @@
 cmake_minimum_required(VERSION 3.25)
 project(MetalFloat16Accelerator CXX)
 
-# M2 Apple Silicon targeting
+# ── Platform targeting ─────────────────────────────────────────────────────────
 set(CMAKE_SYSTEM_NAME Darwin)
 set(CMAKE_OSX_ARCHITECTURES "arm64")
 set(CMAKE_OSX_DEPLOYMENT_TARGET "14.0")
 
-# Include directories
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+# Generate compile_commands.json for clang-tidy / LSP
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# C++20 standard
+# ── C++20 ─────────────────────────────────────────────────────────────────────
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# M2-specific optimizations
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
-    add_compile_options(
-            -O3
-            -ffast-math
-            -mcpu=apple-m2
-            -mtune=apple-m2
-            -fno-math-errno
-            -fno-trapping-math
-        )
+# ── Include paths ─────────────────────────────────────────────────────────────
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+# ── Sanitizer option (pass -DSANITIZE=address|thread|undefined at configure) ──
+option(SANITIZE "Enable sanitizer (address|thread|undefined|none)" "none")
+if(NOT SANITIZE STREQUAL "none")
+    add_compile_options(-fsanitize=${SANITIZE} -fno-omit-frame-pointer -g)
+    add_link_options(-fsanitize=${SANITIZE})
+    message(STATUS "Sanitizer: ${SANITIZE}")
 endif()
 
-# Main library target
+# ── M2-specific compile flags (Release builds only) ───────────────────────────
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64" AND NOT SANITIZE STREQUAL "none")
+    # Sanitizers need debug info; skip aggressive optimisations that obscure stacks
+    add_compile_options(-O1 -mcpu=apple-m2)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
+    add_compile_options(
+        -O3
+        -ffast-math
+        -mcpu=apple-m2
+        -mtune=apple-m2
+        -fno-math-errno
+        -fno-trapping-math
+    )
+endif()
+
+# ── Metal frameworks ──────────────────────────────────────────────────────────
+find_library(METAL_LIBRARY     Metal)
+find_library(FOUNDATION_LIBRARY Foundation)
+find_library(QUARTZCORE_LIBRARY QuartzCore)
+
+# ── Main shared library ───────────────────────────────────────────────────────
 add_library(metal_float16_accelerator SHARED
     src/core/metal_device.cpp
     src/matrix/float16_matrix.cpp
@@ -33,12 +52,6 @@ add_library(metal_float16_accelerator SHARED
     src/metal_float16_accelerator.cpp
 )
 
-# Find required frameworks
-find_library(METAL_LIBRARY Metal)
-find_library(FOUNDATION_LIBRARY Foundation)
-find_library(QUARTZCORE_LIBRARY QuartzCore)
-
-# Link Metal frameworks
 target_link_libraries(metal_float16_accelerator
     PRIVATE
     ${METAL_LIBRARY}
@@ -46,47 +59,36 @@ target_link_libraries(metal_float16_accelerator
     ${QUARTZCORE_LIBRARY}
 )
 
-# Example executable
-add_executable(basic_matmul_example
-    examples/basic_matmul.cpp
-)
+# ── Helper macro to add a binary linked against the library ───────────────────
+macro(add_accelerator_exe TARGET_NAME SOURCE_FILE)
+    add_executable(${TARGET_NAME} ${SOURCE_FILE})
+    target_link_libraries(${TARGET_NAME} PRIVATE metal_float16_accelerator)
+endmacro()
 
-target_link_libraries(basic_matmul_example
-    PRIVATE
-    metal_float16_accelerator
-)
+# ── Examples ──────────────────────────────────────────────────────────────────
+add_accelerator_exe(basic_matmul_example  examples/basic_matmul.cpp)
+add_accelerator_exe(simple_test           examples/simple_test.cpp)
+add_accelerator_exe(speedup_demo          examples/speedup_demo.cpp)
 
-# Simple test executable
-add_executable(simple_test
-    examples/simple_test.cpp
-)
+# ── Benchmarks ────────────────────────────────────────────────────────────────
+add_accelerator_exe(matrix_benchmarks  benchmarks/matrix_benchmarks.cpp)
+add_accelerator_exe(latency_profile    benchmarks/latency_profile.cpp)
 
-target_link_libraries(simple_test
-    PRIVATE
-    metal_float16_accelerator
-)
+# ── Tests ─────────────────────────────────────────────────────────────────────
+enable_testing()
 
-# Benchmark executable
-add_executable(matrix_benchmarks
-    benchmarks/matrix_benchmarks.cpp
-)
+add_accelerator_exe(correctness_tests tests/correctness_tests.cpp)
 
-target_link_libraries(matrix_benchmarks
-    PRIVATE
-    metal_float16_accelerator
-)
+# Register with CTest so `ctest` / CI can drive them
+add_test(NAME CorrectnessTests COMMAND correctness_tests)
 
-# Speedup demo (portfolio / presentation)
-add_executable(speedup_demo
-    examples/speedup_demo.cpp
+# ── Install ───────────────────────────────────────────────────────────────────
+install(
+    TARGETS
+        metal_float16_accelerator
+        basic_matmul_example simple_test speedup_demo
+        matrix_benchmarks latency_profile
+        correctness_tests
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
 )
-
-target_link_libraries(speedup_demo
-    PRIVATE
-    metal_float16_accelerator
-)
-
-# Install targets
-install(TARGETS metal_float16_accelerator basic_matmul_example simple_test matrix_benchmarks speedup_demo
-        RUNTIME DESTINATION bin
-        LIBRARY DESTINATION lib)
