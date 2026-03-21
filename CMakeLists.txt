@@ -76,7 +76,17 @@ target_link_libraries(matrix_benchmarks
     metal_float16_accelerator
 )
 
+# Speedup demo (portfolio / presentation)
+add_executable(speedup_demo
+    examples/speedup_demo.cpp
+)
+
+target_link_libraries(speedup_demo
+    PRIVATE
+    metal_float16_accelerator
+)
+
 # Install targets
-install(TARGETS metal_float16_accelerator basic_matmul_example simple_test matrix_benchmarks
+install(TARGETS metal_float16_accelerator basic_matmul_example simple_test matrix_benchmarks speedup_demo
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib)

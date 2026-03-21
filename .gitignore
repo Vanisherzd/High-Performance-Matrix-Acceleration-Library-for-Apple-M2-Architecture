@@ -34,11 +34,8 @@ __pycache__/
 venv/
 ENV/
 
-# Logs and Benchmarks
+# Logs
 *.log
-plots/
-BENCHMARK_REPORT.md
-performance_viz.png
 
 # Artifacts
 matrix_benchmarks
